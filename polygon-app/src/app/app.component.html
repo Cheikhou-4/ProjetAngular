@@ -1,0 +1,31 @@
+<div class="container py-4">
+  <h1 class="mb-3">📊 Données boursières</h1>
+  <button class="btn btn-primary mb-3" (click)="loadData()">
+    Charger les données
+  </button>
+
+  <div *ngIf="loading" class="alert alert-info">Chargement...</div>
+
+  <table class="table table-striped" *ngIf="stocks.length">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Symbole</th>
+        <th>Nom</th>
+        <th>Marché</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let stock of stocks; let i = index">
+        <td>{{ i+1 }}</td>
+        <td>{{ stock.ticker }}</td>
+        <td>{{ stock.name }}</td>
+        <td>{{ stock.market }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && !stocks.length" class="alert alert-warning">
+    Aucune donnée chargée
+  </div>
+</div>
