@@ -1,0 +1,164 @@
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body, .min-vh-100 {
+	font-family: 'Montserrat', Arial, sans-serif;
+}
+.animated-bg {
+	position: fixed;
+	top: 0; left: 0; width: 100vw; height: 100vh;
+	z-index: -1;
+	background: linear-gradient(135deg,#e3f0ff 0%,#b3d8ff 100%);
+	overflow: hidden;
+}
+.cloud {
+	position: absolute;
+	background: rgba(255,255,255,0.7);
+	border-radius: 50%;
+	box-shadow: 60px 0 40px -20px #fff, 120px 0 60px -30px #fff;
+	animation: cloudmove 40s linear infinite;
+}
+@keyframes cloudmove {
+	0% { left: -200px; }
+	100% { left: 100vw; }
+}
+.badge-neon {
+	box-shadow: 0 0 8px 2px #64b5f6, 0 0 16px 4px #1976d2;
+	border: 1px solid #64b5f6;
+}
+.forecast-tile:hover {
+	transform: scale(1.07);
+	box-shadow: 0 8px 32px #1976d2a0;
+	transition: all 0.3s;
+}
+.fade-in {
+	animation: fadeIn 1s;
+}
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(30px); }
+	to { opacity: 1; transform: none; }
+}
+.sticky-header {
+	position: sticky; top: 0; z-index: 10;
+	background: linear-gradient(90deg,#1976d2 0%,#64b5f6 100%);
+	box-shadow: 0 2px 12px #1976d2a0;
+}
+.footer {
+	background: linear-gradient(90deg,#1976d2 0%,#64b5f6 100%);
+	color: #fff;
+	text-align: center;
+	padding: 1.5rem 0 1rem 0;
+	margin-top: 3rem;
+	border-radius: 2rem 2rem 0 0;
+}
+</style>
+<div class="min-vh-100 position-relative" style="font-family:'Montserrat',Arial,sans-serif;">
+	<div class="animated-bg">
+		<div class="cloud" style="top:10vh; width:180px; height:60px; animation-delay:0s;"></div>
+		<div class="cloud" style="top:30vh; width:120px; height:40px; animation-delay:10s;"></div>
+		<div class="cloud" style="top:60vh; width:200px; height:70px; animation-delay:20s;"></div>
+		<div class="cloud" style="top:80vh; width:100px; height:30px; animation-delay:30s;"></div>
+	</div>
+
+		<main class="w-100 fade-in">
+			<div class="d-flex flex-column align-items-center" style="width:100%;margin:0;">
+			<form class="d-flex flex-wrap gap-2 justify-content-center mb-4 p-3 rounded-4 shadow-lg bg-white w-100" style="width:100%;" (submit)="searchMeteo(); $event.preventDefault();">
+					<span class="input-group-text bg-light"><i class="bi bi-geo-alt-fill"></i></span>
+					  <input type="text" class="form-control rounded-pill" style="min-width:220px;width:100%;" [(ngModel)]="city" name="city" placeholder="Entrez une ville..." required>
+					<button type="submit" class="btn btn-primary rounded-pill px-4 badge-neon" [disabled]="loading">
+						<i class="bi bi-search"></i> Rechercher
+					</button>
+					<button type="button" class="btn btn-outline-info rounded-pill px-4 badge-neon" (click)="getLocationMeteo()" [disabled]="loading">
+						<i class="bi bi-crosshair"></i> Ma position
+					</button>
+				</form>
+				<div *ngIf="loading" class="text-center text-info mb-2 fade-in">
+					<i class="bi bi-arrow-repeat bi-spin"></i> Chargement...
+				</div>
+				<div *ngIf="errorMsg" class="alert alert-danger text-center mb-2 fade-in">{{ errorMsg }}</div>
+				<div *ngIf="!meteoData" class="welcome-message text-center mb-4" style="width:100%;margin-top:2rem;">
+					<h2 class="fw-bold" style="color:#1976d2;text-shadow:0 2px 12px #1565c0;font-size:3.5rem;margin-bottom:1.5rem;">Bienvenue sur Météo Sénégal !</h2>
+					<p class="lead mb-4" style="color:#1565c0;font-size:2.2rem;font-weight:600;">Obtenez la météo en temps réel partout au Sénégal.<br>Entrez une ville ou cliquez sur un exemple ci-dessous.</p>
+					<div class="d-flex justify-content-center gap-5 mt-5 mb-5" style="font-size:2rem;">
+						<button class="btn btn-outline-primary rounded-pill px-5 py-4 badge-neon" style="font-weight:700;font-size:2.5rem;min-width:200px;" (click)="city='Dakar'; searchMeteo()">Dakar</button>
+						<button class="btn btn-outline-primary rounded-pill px-5 py-4 badge-neon" style="font-weight:700;font-size:2.5rem;min-width:200px;" (click)="city='Thiès'; searchMeteo()">Thiès</button>
+						<button class="btn btn-outline-primary rounded-pill px-5 py-4 badge-neon" style="font-weight:700;font-size:2.5rem;min-width:200px;" (click)="city='Saint-Louis'; searchMeteo()">Saint-Louis</button>
+						<button class="btn btn-outline-primary rounded-pill px-5 py-4 badge-neon" style="font-weight:700;font-size:2.5rem;min-width:200px;" (click)="city='Ziguinchor'; searchMeteo()">Ziguinchor</button>
+					</div>
+					<blockquote class="blockquote text-center mt-4 mb-4" style="font-size:2.2rem;color:#1565c0;font-weight:700;text-shadow:0 2px 12px #2196f3;">
+						<em>"Il n’y a pas de mauvais temps, juste de bons souvenirs sous la pluie ou le soleil."</em>
+					</blockquote>
+				</div>
+				<div *ngIf="history.length" class="mb-3 text-center fade-in">
+					<span class="fw-bold"><i class="bi bi-clock-history"></i> Dernières recherches :</span>
+					<span class="d-inline-flex flex-wrap gap-2 justify-content-center">
+						<button *ngFor="let h of history" class="btn btn-outline-secondary btn-sm rounded-pill px-3 badge-neon" (click)="selectHistory(h)">
+							<i class="bi bi-geo-alt"></i> {{ h }}
+						</button>
+					</span>
+				</div>
+						<div *ngIf="meteoData" class="mb-4 fade-in w-100" style="width:100%;">
+							<section class="d-flex flex-column align-items-center justify-content-center gap-3 p-4 bg-white rounded-4 shadow-lg w-100" style="width:100%;">
+						<img *ngIf="meteoData.weather[0].icon" [src]="'https://openweathermap.org/img/wn/' + meteoData.weather[0].icon + '@2x.png'" alt="Icone météo" style="width:100px;filter:drop-shadow(0 0 12px #64b5f6);">
+								<div class="fs-2 fw-bold text-success mb-1" style="letter-spacing:1px;"><i class="bi bi-geo-alt-fill" style="color:#1976d2;"></i> {{ meteoData.name }}</div>
+								<div class="fs-1 text-primary mb-2" style="font-weight:700;text-shadow:0 0 16px #64b5f6;">
+									<i class="bi bi-thermometer-half" style="color:#2196f3;"></i> <span style="font-size:2.7rem;">{{ meteoData.main.temp }} °C</span>
+								</div>
+								<div class="fst-italic text-info mb-2" style="font-size:1.3rem;letter-spacing:0.5px;">
+									<i class="bi bi-cloud" style="color:#64b5f6;"></i> {{ meteoData.weather[0].description }}
+								</div>
+								<div class="d-flex flex-row gap-3 justify-content-center mt-2 w-100">
+									<span class="badge bg-warning text-dark fs-5 px-4 py-2 shadow-lg" style="border-radius:1.5rem;box-shadow:0 0 16px #ffd700;font-weight:600;display:flex;align-items:center;gap:8px;">
+										<i class="bi bi-droplet" style="color:#2196f3;font-size:1.5rem;"></i> <span style="font-size:1.2rem;">Humidité :</span> <span style="font-size:1.3rem;">{{ meteoData.main.humidity }} %</span>
+									</span>
+									<span class="badge bg-secondary text-white fs-5 px-4 py-2 shadow-lg" style="border-radius:1.5rem;box-shadow:0 0 16px #00e1ff;font-weight:600;display:flex;align-items:center;gap:8px;">
+										<i class="bi bi-wind" style="color:#fff;font-size:1.5rem;"></i> <span style="font-size:1.2rem;">Vent :</span> <span style="font-size:1.3rem;">{{ meteoData.wind.speed }} m/s</span>
+									</span>
+								</div>
+					</section>
+				</div>
+			<div *ngIf="forecastData.length" class="mb-2 fade-in w-100" style="width:100%;">
+					<div class="fw-bold mb-3 mt-4 text-center badge-neon" style="font-size:1.3rem;color:#fff;background:linear-gradient(90deg,#2196f3 60%,#1976d2 100%);border-radius:1.5rem;padding:0.5rem 2rem;box-shadow:0 0 16px #2196f3;display:inline-block;">
+						<i class="bi bi-calendar-week" style="font-size:1.5rem;margin-right:8px;"></i> Prévisions 5 jours
+					</div>
+																	<div class="d-flex flex-row justify-content-between gap-4 w-100" style="overflow-x:auto;">
+																		<div *ngFor="let f of forecastData" style="flex:1 1 0;min-width:0;width:100%;">
+																			<section class="p-5 rounded-5 text-center forecast-tile h-100 w-100" style="width:100%;background:#fff;transition:box-shadow 0.3s,transform 0.3s;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:2.5rem;box-shadow:0 12px 48px #2196f3cc,0 0 32px #2196f3; border:4px solid #2196f3; min-height:320px;">
+																				<div class="fw-bold mb-3" style="font-size:1.6rem;color:#1565c0;text-shadow:0 2px 12px #2196f3;">
+																					{{ f.dt_txt | date:'EEEE d MMMM':'fr-FR' }}
+																				</div>
+																				<img [src]="'https://openweathermap.org/img/wn/' + f.weather[0].icon + '@2x.png'" alt="Icone" style="width:110px;filter:drop-shadow(0 0 32px #2196f3);margin-bottom:18px;animation:floatIcon 2s infinite alternate;">
+																				<span class="badge bg-primary fs-3 mb-3 badge-neon w-100" style="white-space:normal;font-weight:700;padding:0.7rem 0;"><i class="bi bi-thermometer-half"></i> {{ f.main.temp }} °C</span>
+																				<span class="badge bg-info text-dark fs-4 mb-3 badge-neon w-100" style="white-space:normal;font-weight:700;padding:0.7rem 0;"><i class="bi bi-cloud"></i> {{ f.weather[0].description }}</span>
+																				<span class="badge bg-warning text-dark fs-4 mb-3 badge-neon w-100" style="white-space:normal;box-shadow:0 0 16px #ffd700;font-weight:700;padding:0.7rem 0;"><i class="bi bi-droplet"></i> {{ f.main.humidity }} %</span>
+																				<span class="badge bg-secondary fs-4 badge-neon w-100" style="white-space:normal;box-shadow:0 0 16px #00e1ff;font-weight:700;padding:0.7rem 0;"><i class="bi bi-wind"></i> {{ f.wind.speed }} m/s</span>
+																			</section>
+																			<style>
+																			.forecast-tile:hover {
+																				box-shadow:0 8px 32px #2196f3cc,0 0 16px #fff;
+																				transform:translateY(-8px) scale(1.04);
+																				z-index:2;
+																			}
+																			@keyframes floatIcon {
+																				0% { transform:translateY(0); }
+																				100% { transform:translateY(-10px); }
+																			}
+																			</style>
+						</div>
+					</div>
+				</div>
+			</div>
+	</main>
+			<footer class="footer w-100 rounded-top-4" style="border-radius:2rem 2rem 0 0; margin-left:0; margin-right:0; width:100vw; left:0; position:relative;">
+				<div style="padding-left:3vw;padding-right:3vw;">
+				<div class="mb-2">
+					<i class="bi bi-cloud-sun-fill" style="font-size:2rem;"></i>
+				</div>
+				<div>Météo Sénégal © 2025 | Propulsé par OpenWeatherMap & Angular</div>
+				<div class="mt-2">
+					<a href="#" class="text-white mx-2" style="text-decoration:underline;">Contact</a>
+					<a href="#" class="text-white mx-2" style="text-decoration:underline;">Mentions légales</a>
+				</div>
+			</div>
+		</footer>
+</div>
+
